@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/szromek/lotr-client-go"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
@@ -31,11 +33,13 @@ type provider struct {
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
 	version string
+	client  *lotr.Client
 }
 
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
-	Example types.String `tfsdk:"example"`
+	Host  types.String `tfsdk:"host"`
+	Token types.String `tfsdk:"token"`
 }
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -47,6 +51,65 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
+	if data.Host.Unknown {
+		// Cannot connect to client with an unknown value
+		resp.Diagnostics.AddWarning(
+			"Unable to create client",
+			"Cannot use unknown value as host",
+		)
+		return
+	}
+
+	var host string
+
+	if data.Host.Null {
+		host = os.Getenv("LOTR_API_HOST")
+	} else {
+		host = data.Host.Value
+	}
+
+	if host == "" {
+		host = "https://the-one-api.dev/v2/"
+	}
+
+	if data.Token.Unknown {
+		// Cannot connect to client with an unknown value
+		resp.Diagnostics.AddWarning(
+			"Unable to create client",
+			"Cannot use unknown value as token",
+		)
+		return
+	}
+
+	var token string
+
+	if data.Token.Null {
+		token = os.Getenv("LOTR_API_TOKEN")
+	} else {
+		token = data.Token.Value
+	}
+
+	if token == "" {
+		resp.Diagnostics.AddError(
+			"Unable to create client",
+			"Missing authentication token",
+		)
+
+		return
+	}
+
+	c, err := lotr.NewClient(&host, &token)
+
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to create client",
+			"Unable to create hashicups client:\n\n"+err.Error(),
+		)
+		return
+	}
+
+	p.client = c
+
 	// Configuration values are now available.
 	// if data.Example.Null { /* ... */ }
 
@@ -57,22 +120,25 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 }
 
 func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
-	return map[string]tfsdk.ResourceType{
-		"scaffolding_example": exampleResourceType{},
-	}, nil
+	return map[string]tfsdk.ResourceType{}, nil
 }
 
 func (p *provider) GetDataSources(ctx context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
 	return map[string]tfsdk.DataSourceType{
-		"scaffolding_example": exampleDataSourceType{},
+		"lotr_character": characterDataSourceType{},
 	}, nil
 }
 
 func (p *provider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"example": {
-				MarkdownDescription: "Example provider attribute",
+			"host": {
+				MarkdownDescription: "Host address of The One API",
+				Optional:            true,
+				Type:                types.StringType,
+			},
+			"token": {
+				MarkdownDescription: "An API token for The One API",
 				Optional:            true,
 				Type:                types.StringType,
 			},
