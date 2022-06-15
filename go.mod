@@ -10,5 +10,3 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
 	github.com/szromek/lotr-client-go v0.0.0-00010101000000-000000000000
 )
-
-replace github.com/szromek/lotr-client-go => /Users/krzysztof/Documents/praca/terraform-provider/lotr-client-go
