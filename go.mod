@@ -8,5 +8,5 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.9.1
 	github.com/hashicorp/terraform-plugin-log v0.4.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
-	github.com/szromek/lotr-client-go v0.0.0-00010101000000-000000000000
+	github.com/szromek/lotr-client-go v0.0.1
 )
