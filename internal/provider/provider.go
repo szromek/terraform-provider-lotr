@@ -131,14 +131,15 @@ func (p *provider) GetDataSources(ctx context.Context) (map[string]tfsdk.DataSou
 
 func (p *provider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		MarkdownDescription: "The Lord of The Rings API provider based on The One API",
 		Attributes: map[string]tfsdk.Attribute{
 			"host": {
-				MarkdownDescription: "Host address of The One API",
+				MarkdownDescription: "Host address of The One API, if not provided ENV['LOTR_API_HOST'] will be used",
 				Optional:            true,
 				Type:                types.StringType,
 			},
 			"token": {
-				MarkdownDescription: "An API token for The One API",
+				MarkdownDescription: "An API token for The One API, if not provided ENV['LOTR_API_TOKEN'] will be used",
 				Optional:            true,
 				Type:                types.StringType,
 			},
