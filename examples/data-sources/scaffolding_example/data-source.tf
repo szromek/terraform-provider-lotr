@@ -12,5 +12,5 @@ data "lotr_character" "example" {
 }
 
 output "lotr_name" {
-  value = data.lotr_character.example.name
+  value = data.lotr_character.example
 }
